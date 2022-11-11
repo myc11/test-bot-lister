@@ -1,25 +1,49 @@
+import json
+import asyncio
 import discord
 from discord.ext import commands
 
+intents = discord.Intents.all()
+bot = commands.Bot('!', intents=intents)
 
+extensions = [
+    'utils.music',
+    'utils.events'
+]
 
-intents = discord.Intents.default()
-intents.message_content = True
+@bot.command()
+async def load(ctx, extension):
+    try:
+        await bot.load_extension(f'{extension}')
+        await ctx.send(f"Loaded {extension}")
+    except FileExistsError:
+        await ctx.send(f"No Extension names {extension}")
 
-client = discord.Client(intents=intents)
+@bot.command()
+async def unload(ctx, extension):
+    try:
+        await bot.unload_extension(f'{extension}')
+        await ctx.send(f"Unloaded {extension}")
+    except FileExistsError:
+        await ctx.send(f"No Extension names {extension}")
 
-@client.event
+@bot.command()
+async def reload(ctx, extension):
+    try:
+        await bot.reload_extension(f'{extension}')
+        await ctx.send(f"Re - Loaded {extension}")
+    except FileExistsError:
+        await ctx.send(f"No Extension names {extension}")
+
+@bot.event
 async def on_ready():
-    print(f'We have logged in as {client.user}')
+    print('Logged in as:\n{0.user.name}\n{0.user.id}'.format(bot))
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
+async def main():
+    token = json.load(open('settings.json', 'r', encoding='utf-8'))['TOKEN']
+    for ext in extensions:
+        await bot.load_extension(ext)
+    await bot.start(token)
 
-    if message.content.startswith('$hello'):
-        await message.channel.send('Hello!')
-
-client.run('MTA0MDUwMzQ3MjEwNzI5MDY4NA.Gv__IO.hmG5_zrcZG7qPkX8pdNmkWkAdsWgVf6ZZ314Uk')
-
-
+if __name__ == '__main__':
+    asyncio.run(main())
