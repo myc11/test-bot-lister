@@ -3,7 +3,7 @@ import urllib.request
 import urllib
 
 url = 'https://www.youtube.com/watch?v=z3UYgpFNcbQ'
-async def getyoutube_name(link):
+def getyoutube_name(link):
     x=link.split('=')
     li = list(x)
     li.pop(0)

@@ -2,9 +2,9 @@ import os.path
 import youtube_dl
 import yt_dlp
 from utils.song import *
-from requrst import dragyoutube
+from utils.requrst import dragyoutube
 
-async def download_audio_local(link):
+def download_audio_local(link):
     download_path = f'youtubemp/{link}.mp3'
     ydl_opts = {
         'format': 'bestaudio/best',

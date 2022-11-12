@@ -54,11 +54,11 @@ class VoiceHandler:
             self.voice_client.pause()
 
         song = self.playlist.get()
-        print("Playing: " + song.name + ' ' + song.source)
 
         if song:
+            print("Playing: " + song.name + ' ' + song.source)
             source = discord.FFmpegPCMAudio(song.source)
-            self.voice_client.play(source, after=lambda e: self.play_next(e))
+            self.voice_client.play(source, after=lambda e: self.next_song(e))
 
     def next_song(self, e):
         print('next_song: Ended with ' + e)
@@ -67,9 +67,9 @@ class VoiceHandler:
 
     async def load_song_youtube(self, ctx, msg):
         song = download_audio_global(msg)
-        print(song.name, song.source)
-        if song != None:
-            if self.playlist.playing == None:
+        print('load_song_youtube',self.playlist.playing, song.name, song.source)
+        if song is not None:
+            if self.playlist.playing is None:
                 self.playlist.add(song)
                 await ctx.send(f'Now playing {song.name}')
                 await self.play_song()
@@ -79,3 +79,6 @@ class VoiceHandler:
 
         else:
             print('ERROR: load_song_youtube')
+
+    async def load_song_bilibili(self, ctx, msg):
+        pass

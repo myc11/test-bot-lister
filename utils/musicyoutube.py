@@ -7,11 +7,11 @@ import re
 import urllib
 import simplejson
 from utils.song import *
-from download import download_audio_local
-from youtubevideoname import getyoutube_name
-from requrst import dragyoutube
+from utils.download import download_audio_local
+from utils.youtubevideoname import getyoutube_name
+from utils.requrst import dragyoutube
 
-async def download_audio_local(link):
+def download_audio_local(link):
     path=download_audio_local(link)
     if path=='fuckyou':
         return path
@@ -19,7 +19,7 @@ async def download_audio_local(link):
         name= getyoutube_name(link)
         return Song(name , path, Song.LOCAL)
 
-async def download_audio_global(link):
+def download_audio_global(link):
     try:
         ydl_opts = {'format': 'bestaudio'}
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
