@@ -3,6 +3,7 @@ from discord.ext import commands
 from utils.playlist import *
 from utils.song import *
 from utils.musicyoutube import *
+import youtube_dl
 
 class Music(commands.Cog):
 
@@ -17,7 +18,7 @@ class Music(commands.Cog):
     async def __join(self, ctx: commands.Context):
 
         dest = ctx.author.voice.channel
-        self.voice_client = await dest.connect(reconnect=True, timeout=60)
+        self.voice_client = await dest.connect(reconnect=True, timeout=None)
 
         print(f'Joined {ctx.author.voice.channel}')
         await ctx.send(f'Joined {ctx.author.voice.channel}')
@@ -29,7 +30,20 @@ class Music(commands.Cog):
 
     @commands.command(name='play', aliases=['p'])
     async def __play(self, ctx: commands.Context, *, msg: str):
+        #song = self.playlist.get()
+        #print("Playing: " + song.name + ' ' + song.source)
+        print(msg)
+        ydl_opts = {'format': 'bestaudio'}
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(msg, download=False)
+            URL = info['formats'][0]['url']
+        # voice = get(self.bot.voice_clients, guild=ctx.guild)
+        print(URL)
 
+        self.voice_client.play(discord.FFmpegPCMAudio(URL))
+
+
+        '''
         song = await download_audio(msg)
 
         if song:
@@ -41,14 +55,17 @@ class Music(commands.Cog):
             else:
                 self.playlist.add(song)
                 await ctx.send(f'{song.name} added in queue position {len(self.playlist) - 1}')
-
-    async def play_song(self):
+        '''
+    '''async def play_song(self):
         song = self.playlist.get()
         print("Playing: " + song.name + ' ' + song.source)
         if song != None:
 
             source = discord.PCMVolumeTransformer((discord.FFmpegPCMAudio(song.source)))
-            self.voice_client.play(source, after=lambda e: self.next_song(e))
+            print('fuck')
+            self.voice_client.play(source, after=lambda e: self.next_song(e))'''
+
+
 
     def next_song(self, e):
         coro = self.play_song()
@@ -68,7 +85,7 @@ class Music(commands.Cog):
     async def before_play(self, ctx: commands.Context):
         if not self.voice_client:
             dest = ctx.author.voice.channel
-            self.voice_client = await dest.connect(reconnect=True, timeout=60)
+            self.voice_client = await dest.connect(reconnect=True, timeout=None)
 
             print(f'Joined {ctx.author.voice.channel}')
             await ctx.send(f'Joined {ctx.author.voice.channel}')
