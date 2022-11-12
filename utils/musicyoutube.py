@@ -8,7 +8,7 @@ import urllib
 import simplejson
 from utils.song import *
 
-async def download_audio_local(link):
+def download_audio_local(link):
     download_path = f'youtubemp/{link}.mp3'
     ydl_opts = {
         'format': 'bestaudio/best',
@@ -43,7 +43,7 @@ async def download_audio_local(link):
             name = "id:%s\nauthor:%s\ntitle:%s" % (title, author, link)
             return Song(name, download_path, Song.LOCAL)
 
-async def download_audio_global(link):
+def download_audio_global(link):
     try:
         ydl_opts = {'format': 'bestaudio'}
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
@@ -62,15 +62,20 @@ async def download_audio_global(link):
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(link, download=False)
                 url = info['formats'][0]['url']
-
         else:
             return None
-    json = simplejson.load(urllib.urlopen(nlink))
+
+    try:
+        json = simplejson.load(urllib.request.urlopen(nlink))
+    except Exception as e:
+        print(repr(e))
+
     title = json['entry']['title']['$t']
     author = json['entry']['author'][0]['name']
+    print(title, author)
     name = "id:%s\nauthor:%s\ntitle:%s" % (title, author, link)
+    song = Song(name, url, Song.URL)
+    print(name)
     return Song(name, url, Song.URL)
 
-if __name__ == '__main__':
 
-    download_audio('思念是一种病')

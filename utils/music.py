@@ -25,7 +25,6 @@ class Music(commands.Cog):
     async def __play(self, ctx: commands.Context, *, msg: str):
 
         voicehandler = await VoiceHandler.get_voicehandler(ctx)
-        print('1')
         await voicehandler.load_song_youtube(ctx, msg)
 
 
