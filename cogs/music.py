@@ -1,6 +1,5 @@
 import traceback
 
-import discord
 from discord.ext import commands
 from utils.log import Log
 from utils.voicehandler import VoiceHandler

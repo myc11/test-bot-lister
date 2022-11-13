@@ -1,27 +1,35 @@
-import os.path
-
+import traceback
 import discord
 import youtube_dl
-import yt_dlp
-import urllib.request
-import urllib.parse
-import re
-import urllib
-import simplejson
+
 from utils.song import *
 from utils.download import download_audio_local
 from utils.youtubevideoname import getyoutube_name
 from utils.requrst import dragyoutube
+from utils.log import Log
 
+
+def preprocess_youtube(link):
+    try:
+        title= getyoutube_name(link)
+        return Song(title, link, Song.BILI)
+    except Exception as e:
+        try:
+            Log.log(e, 'Try searching')
+            link = dragyoutube(link)
+            title= getyoutube_name(link)
+            return Song(title, link, Song.BILI)
+        except:
+            traceback.print_exc()
+            return None
 
 def download_audio_local(link):
     path=download_audio_local(link)
     if path=='fuckyou':
         return path
     else:
-        name= getyoutube_name(link)
         source = discord.FFmpegPCMAudio(path)
-        return Song(name, source, path)
+        return source
 
 def download_audio_global(link):
     ffmpeg_options = {
@@ -33,9 +41,8 @@ def download_audio_global(link):
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(link, download=False)
             url = info['formats'][0]['url']
-        name= getyoutube_name(link)
         source = discord.FFmpegPCMAudio(url, **ffmpeg_options)
-        return Song(name, source)
+        return source
     except:
         links=dragyoutube(link)
         if link=='fuck you':
@@ -44,7 +51,6 @@ def download_audio_global(link):
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(links, download=False)
                 url = info['formats'][0]['url']
-            name=getyoutube_name(link)
             source = discord.FFmpegPCMAudio(url, **ffmpeg_options)
-            return Song(name, source)
+            return source
 

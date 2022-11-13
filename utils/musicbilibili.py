@@ -12,6 +12,24 @@ import traceback
 title_regex = re.compile('<title data-vue-meta="true">(.*?)_哔哩哔哩_bilibili</title>')
 playinfo_regex = re.compile('window.__playinfo__=(.*?)</script><script>window.__INITIAL_STATE__=', re.I | re.S)
 
+
+def preprocess_bili(link):
+    ses = session()
+    try:
+        html = ses.get(link)
+        title = title_regex.findall(html.text)[0]
+        return Song(title, link, Song.BILI)
+    except Exception as e:
+        try:
+            Log.log(e, 'Try searching')
+            link = dragbilibili(link)
+            html = ses.get(link)
+            title = title_regex.findall(html.text)[0]
+            return Song(title, link, Song.BILI)
+        except:
+            traceback.print_exc()
+            return None
+
 def download_bili_audio(link):
 
     ffmpeg_options = {
@@ -19,52 +37,26 @@ def download_bili_audio(link):
     }
 
     ses = session()
+
+    # Get html content
+    html = ses.get(link)
+    # Get name
+    title = title_regex.findall(html.text)[0]
+
+    # Find video data
+    jsondata = playinfo_regex.findall(html.text)[0]
+    data = json.loads(jsondata)['data']
+
     try:
-        # Get html content
-        html = ses.get(link)
-        # Get name
-        title = title_regex.findall(html.text)[0]
+        # New path
+        base_url = data['dash']['audio'][0]['baseUrl']
+    except:
+        # Old path
+        base_url = data['durl'][0]['url']
 
-        # Find video data
-        jsondata = playinfo_regex.findall(html.text)[0]
-        data = json.loads(jsondata)['data']
+    source = discord.FFmpegPCMAudio(base_url, **ffmpeg_options)
 
-        try:
-            # New path
-            base_url = data['dash']['audio'][0]['baseUrl']
-        except:
-            # Old path
-            base_url = data['durl'][0]['url']
-
-        source = discord.FFmpegPCMAudio(base_url, **ffmpeg_options)
-
-        return Song(title, source)
-    except Exception as e:
-        Log.log(e, 'Try searching')
-        try:
-            link = dragbilibili(link)
-            Log.log('', link)
-            html = ses.get(link)
-            # Get name
-            title = title_regex.findall(html.text)[0]
-
-            # Find video data
-            jsondata = playinfo_regex.findall(html.text)[0]
-            data = json.loads(jsondata)['data']
-
-            try:
-                # New path
-                base_url = data['dash']['audio'][0]['baseUrl']
-            except:
-                # Old path
-                base_url = data['durl'][0]['url']
-
-            source = discord.FFmpegPCMAudio(base_url, **ffmpeg_options)
-
-            return Song(title, source)
-        except Exception as e:
-            traceback.print_exc()
-            return None
+    return source
 
 
 if __name__ == '__main__':
