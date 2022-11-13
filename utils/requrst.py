@@ -21,6 +21,6 @@ def dragbilibili(link):
     search_results = re.findall(r'www.bilibili.com/video/.*?search', html_content.read().decode())
     if search_results:
         result=search_results[0].replace('?from=search','')
-        return result
+        return 'https://' + result
         if not os.path.isfile(download_path):
             return 'fuck you'
