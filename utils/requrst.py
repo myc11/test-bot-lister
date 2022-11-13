@@ -2,7 +2,7 @@ import urllib.request
 import urllib.parse
 import re
 import urllib
-async def dragyoutube(link):
+def dragyoutube(link):
     query_string = urllib.parse.urlencode({"search_query": link})
     html_content = urllib.request.urlopen("https://www.youtube.com.hk/results?" + query_string)
     search_results = re.findall(r'url\"\:\"\/watch\?v\=(.*?(?=\"))', html_content.read().decode())
@@ -11,4 +11,13 @@ async def dragyoutube(link):
         return nlink
         if not os.path.isfile(download_path):
             return 'fuck you'
-#async def dragbilibil(link):
+
+def dragbilibili(link):
+    link=link.replace(' ','+')
+    html_content = urllib.request.urlopen("https://search.bilibili.com/all?keyword=" + link)
+    search_results = re.findall(r'www.bilibili.com/video/.*?search', html_content.read().decode())
+    if search_results:
+        result=search_results[0].replace('?from=search','')
+        return result
+        if not os.path.isfile(download_path):
+            return 'fuck you'
