@@ -27,6 +27,12 @@ class Music(commands.Cog):
         if voicehandler is not None:
             await voicehandler.disconnect(ctx)
 
+    @commands.command(name='skip', invoke_without_subcommand=True)
+    async def __skip(self, ctx: commands.Context):
+        voicehandler = await VoiceHandler.get_voicehandler(ctx)
+        if voicehandler is not None:
+            await voicehandler.skip(ctx)
+
     @commands.command(name='play', aliases=['p'])
     async def __play(self, ctx: commands.Context, *, msg: str):
         voicehandler = await VoiceHandler.get_voicehandler(ctx)
