@@ -1,4 +1,6 @@
 import os.path
+
+import discord
 import youtube_dl
 import yt_dlp
 import urllib.request
@@ -11,13 +13,18 @@ from utils.download import download_audio_local
 from utils.youtubevideoname import getyoutube_name
 from utils.requrst import dragyoutube
 
+ffmpeg_options = {
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
+}
+
 def download_audio_local(link):
     path=download_audio_local(link)
     if path=='fuckyou':
         return path
     else:
         name= getyoutube_name(link)
-        return Song(name , path, Song.LOCAL)
+        source = discord.FFmpegPCMAudio(path)
+        return Song(name, source, path)
 
 def download_audio_global(link):
     try:
@@ -26,7 +33,8 @@ def download_audio_global(link):
             info = ydl.extract_info(link, download=False)
             url = info['formats'][0]['url']
         name= getyoutube_name(link)
-        return Song(name, url, Song.URL)
+        source = discord.FFmpegPCMAudio(url, **ffmpeg_options)
+        return Song(name, source)
     except:
         links=dragyoutube(link)
         if link=='fuck you':
@@ -36,5 +44,6 @@ def download_audio_global(link):
                 info = ydl.extract_info(links, download=False)
                 url = info['formats'][0]['url']
             name=getyoutube_name(link)
-            return Song(name, url, Song.URL)
+            source = discord.FFmpegPCMAudio(url, **ffmpeg_options)
+            return Song(name, source)
 
