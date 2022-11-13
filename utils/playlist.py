@@ -14,8 +14,7 @@ class Playlist:
     def __str__(self):
         songname = self.playing.name if self.playing is not None else 'None'
         if len(self) != 0:
-            return f'Song loop: {self.loop_song}  Queue loop: {self.loop_queue}\n'+f'Playing: \
-                    {songname}\n'+'\n'.join([f'{i + 1}. {song.name}'for i, song in enumerate(self.queue)])
+            return f'Song loop: {self.loop_song}  Queue loop: {self.loop_queue}\n'+f'Playing: {songname}\n'+'\n'.join([f'{i + 1}. {song.name}'for i, song in enumerate(self.queue)])
         return f'Song loop: {self.loop_song}  Queue loop: {self.loop_queue}\n' + \
                f'Playing: {songname}\n'+'The playlist is empty'
 
