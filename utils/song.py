@@ -3,16 +3,17 @@ import os
 
 class Song:
 
-    LOCAL = 0
-    URL = 1
-
-    def __init__(self, name: str, source: str, type):
+    def __init__(self, name: str, source, local_path=None):
         self.name = name
         self.source = source
+        self.local_path = local_path
 
-    def __eq__(self, song):
-        return self.name == song.name and self.source == song.source
+    def __str__(self):
+        if self.local_path is not None:
+            return f'Name: {self.name} at {self.local_path}'
+        else:
+            return f'Name: {self.name} from url'
 
     def destroy(self):
-        print('Destory ' + self.source)
-        os.remove(self.source)
+        if self.local_path is not None:
+            os.remove(self.local_path)
