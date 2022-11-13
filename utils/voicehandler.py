@@ -15,79 +15,112 @@ class VoiceHandler:
         self.voice_client = ctx.voice_client
 
         Log.log('VoiceHandler.__init__', "New handler: "+str(ctx.guild))
-        if not self.voice_client.is_connected():
-            raise
 
         voicehandlers[hash(ctx.guild)] = self
 
     @classmethod
-    async def get_voicehandler(cls, ctx: commands.Context):
-        if hash(ctx.guild) in voicehandlers and voicehandlers[hash(ctx.guild)].voice_client.is_connected():
-            return voicehandlers[hash(ctx.guild)]
+    async def get_voicehandler(cls, ctx: commands.Context, connect=True):
+        if hash(ctx.guild) in voicehandlers:
+            if connect:
+                if voicehandlers[hash(ctx.guild)].voice_state():
+                    return voicehandlers[hash(ctx.guild)]
 
+                await voicehandlers[hash(ctx.guild)].connect(ctx)
+                return voicehandlers[hash(ctx.guild)]
+
+            elif not connect:
+                return voicehandlers[hash(ctx.guild)]
         else:
             if ctx.author.voice:
-                dest = ctx.author.voice.channel
-                voice_client = await dest.connect(timeout=60)
+                if connect:
+                    voicehandler = VoiceHandler(ctx.bot, ctx)
+                    await voicehandler.connect(ctx)
 
-                Log.log('get_voicehandler', f"Connected to {ctx.guild}: {voice_client.channel}")
+                    return voicehandler
 
                 return VoiceHandler(ctx.bot, ctx)
-            return None
+
+        return None
+
+    async def connect(self, ctx):
+        try:
+            if ctx.author.voice:
+                dest = ctx.author.voice.channel
+                await dest.connect(timeout=60)
+                self.bot = ctx.bot
+                self.txtchannel = ctx.channel
+                self.voice_client = ctx.voice_client
+
+                Log.log('get_voicehandler', f"Connected to {ctx.guild}: {ctx.channel}")
+        except Exception as e:
+            Log.log('Connect Error', e)
 
     def get_info(self):
         return f"Connected to {str(self.voice_client.guild)}: {self.voice_client.channel}\n" \
-               f"Connected: {self.voice_client.is_connected()} \n" \
+               f"Connected: {self.voice_state()} \n" \
                f"Paused: {self.voice_client.is_paused()} \n" \
                f"Playing: {self.voice_client.is_playing()}"
 
     async def disconnect(self, ctx):
-        if self.voice_client.is_playing():
-            self.voice_client.stop()
-        await ctx.voice_client.disconnect()
+        print(self.voice_state())
+        if self.voice_state():
+            await ctx.voice_client.disconnect()
+        else:
+            await ctx.send("Not connected to voice channel")
         voicehandlers.pop(hash(ctx.guild))
         # Clean play list
         self.playlist.clear()
 
     async def skip(self, ctx):
-        if self.voice_client.is_playing():
+        if not self.voice_state():
+            await ctx.send("Not connected to voice channel")
+        elif self.voice_client.is_playing():
             await ctx.send(f'{self.playlist.playing.name} skipped')
+            self.playlist.loop_skip = True
             self.voice_client.stop()
         else:
             await ctx.send(f'No song is playing')
 
 
-    async def voice_state(self):
+    def voice_state(self):
         # Check if is connected to voice channel
-        if not self.voice_client.is_connected():
-            Log.log('ERROR', 'NOT CONNECTED TO VOICE CHANNEL')
-            raise
+        return self.voice_client is not None and self.voice_client.is_connected()
 
 
     async def play_song(self):
-        await self.voice_state()
-
+        if not self.voice_state():
+            Log.log('play_song', 'VOICE_STATE ERROR')
 
         song = self.playlist.get()
+        try:
+            if song is not None:
+                Log.log("play_song", 'Playing '+song.name)
+                await self.txtchannel.send(f'Now playing {song.name}')
+                self.voice_client.play(song.source, after=lambda err: self.next_song(err))
+            else:
+                await self.txtchannel.send(f'No more songs to play')
+        except Exception as e:
+            traceback.print_exc()
 
-        if song is not None:
-            Log.log("play_song", 'Playing '+song.name)
-            await self.txtchannel.send(f'Now playing {song.name}')
-            self.voice_client.play(song.source, after=lambda err: self.next_song())
-        else:
-            await self.txtchannel.send(f'No more songs to play')
-
-    def next_song(self):
-        Log.log('next_song', '_')
+    def next_song(self, err):
+        Log.log('next_song', 'Ended with: '+str(err))
+        if err is not None:
+            traceback.print_exc()
         coro = self.play_song()
         self.bot.loop.create_task(coro)
 
     async def load_song_youtube(self, ctx, msg):
+        await ctx.send('Searching YouTube...')
         async with self.txtchannel.typing():
-            song = download_audio_global(msg)
+            try:
+                song = download_audio_global(msg)
+            except Exception as e:
+                Log.log('load_song_youtube', f'Searching on youtube')
+                link = dragyoutube(msg)
+                song = download_audio_global(link)
 
             if song is not None:
-                Log.log('', f'load_song_youtube {song.name}')
+                Log.log('load_song_youtube', f' {song.name}')
                 if self.playlist.playing is None:
                     self.playlist.add(song)
                     await self.play_song()
@@ -100,6 +133,7 @@ class VoiceHandler:
                 await ctx.send(f'ERROR: load_song_youtube {msg}')
 
     async def load_song_bilibili(self, ctx, msg):
+        await ctx.send('Searching Bilibili...')
         async with self.txtchannel.typing():
             song = download_bili_audio(msg)
             if song is not None:

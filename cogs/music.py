@@ -1,8 +1,8 @@
+import traceback
+
 import discord
 from discord.ext import commands
-from utils.playlist import *
-from utils.song import *
-from utils.musicyoutube import *
+from utils.log import Log
 from utils.voicehandler import VoiceHandler
 
 class Music(commands.Cog):
@@ -13,34 +13,54 @@ class Music(commands.Cog):
 
     @commands.command(name='queue', invoke_without_subcommand=True, aliases=['q'])
     async def __queue(self, ctx: commands.Context):
-        voicehandler = await VoiceHandler.get_voicehandler(ctx)
-        print(str(voicehandler.playlist))
+        voicehandler = await VoiceHandler.get_voicehandler(ctx, connect=False)
+        Log.log('queue', str(voicehandler.playlist))
         await ctx.send(str(voicehandler.playlist))
 
     @commands.command(name='join', invoke_without_subcommand=True, aliases=['j'])
     async def __join(self, ctx: commands.Context):
         await VoiceHandler.get_voicehandler(ctx)
 
+    @commands.command(name='loop', invoke_without_subcommand=True, aliases=['l', 'loopsong'])
+    async def __loop(self, ctx: commands.Context):
+        voicehandler = await VoiceHandler.get_voicehandler(ctx, connect=False)
+
+        if voicehandler.playlist.loop():
+            await ctx.send('Loop song enabled')
+        else:
+            await ctx.send('Loop song disabled')
+
+    @commands.command(name='loopqueue', invoke_without_subcommand=True, aliases=['lq'])
+    async def __loopqueue(self, ctx: commands.Context):
+        voicehandler = await VoiceHandler.get_voicehandler(ctx, connect=False)
+
+        if voicehandler.playlist.loopqueue():
+            await ctx.send('Loop queue enabled')
+        else:
+            await ctx.send('Loop queue disabled')
+
+
+    @commands.command(name='trace')
+    async def __trace(self, ctx: commands.Context):
+        traceback.print_exc()
+
     @commands.command(name='leave', invoke_without_subcommand=True, aliases=['disconnect', 'quit', 'dc'])
     async def __leave(self, ctx: commands.Context):
-        voicehandler = await VoiceHandler.get_voicehandler(ctx)
-        if voicehandler is not None:
-            await voicehandler.disconnect(ctx)
+        voicehandler = await VoiceHandler.get_voicehandler(ctx, connect=False)
+        await voicehandler.disconnect(ctx)
 
     @commands.command(name='skip', invoke_without_subcommand=True)
     async def __skip(self, ctx: commands.Context):
-        voicehandler = await VoiceHandler.get_voicehandler(ctx)
-        if voicehandler is not None:
-            await voicehandler.skip(ctx)
+        voicehandler = await VoiceHandler.get_voicehandler(ctx, connect=False)
+        await voicehandler.skip(ctx)
 
     @commands.command(name='play', aliases=['p'])
     async def __play(self, ctx: commands.Context, *, msg: str):
         voicehandler = await VoiceHandler.get_voicehandler(ctx)
         if 'www.bilibili.com' in msg:
-            await ctx.send('Searching Bilibili...')
             await voicehandler.load_song_bilibili(ctx, msg)
         else:
-            await ctx.send('Searching YouTube...')
+
             await voicehandler.load_song_youtube(ctx, msg)
 
 
