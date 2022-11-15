@@ -1,3 +1,6 @@
+import traceback
+
+import discord
 from discord.ext import commands
 from utils.playlist import Playlist
 from utils.musicyoutube import *
@@ -19,17 +22,28 @@ class VoiceHandler:
         voicehandlers[hash(ctx.guild)] = self
 
     @classmethod
+    async def get_voicehandler_from_guild(cls, guild: discord.Guild):
+        if hash(guild) in voicehandlers:
+            return voicehandlers[hash(guild)]
+        return None
+
+    @classmethod
     async def get_voicehandler(cls, ctx: commands.Context, connect=True):
         if hash(ctx.guild) in voicehandlers:
+            voicehandler = voicehandlers[hash(ctx.guild)]
+            # Rebind channel
+            if voicehandler.txtchannel != ctx.channel:
+                voicehandler.txtchannel = ctx.channel
             if connect:
-                if voicehandlers[hash(ctx.guild)].voice_state():
-                    return voicehandlers[hash(ctx.guild)]
+                # If is connected
+                if voicehandler.voice_state():
+                    return voicehandler
 
-                await voicehandlers[hash(ctx.guild)].connect(ctx)
-                return voicehandlers[hash(ctx.guild)]
+                await voicehandler.connect(ctx)
+                return voicehandler
 
             elif not connect:
-                return voicehandlers[hash(ctx.guild)]
+                return voicehandler
         else:
             if ctx.author.voice:
                 if connect:
@@ -39,8 +53,6 @@ class VoiceHandler:
                     return voicehandler
 
                 return VoiceHandler(ctx.bot, ctx)
-
-        return None
 
     async def connect(self, ctx):
         try:
@@ -61,14 +73,32 @@ class VoiceHandler:
                f"Paused: {self.voice_client.is_paused()} \n" \
                f"Playing: {self.voice_client.is_playing()}"
 
+    async def check_channel_members(self):
+        try:
+            if self.voice_state():
+                members = self.voice_client.channel.members
+                Log.log('check_channel_members', self.voice_client.channel.members)
+                if len(members) == 1:
+                    await self._disconnect()
+        except:
+            traceback.print_exc()
+
+
     async def disconnect(self, ctx):
         if self.voice_state():
-            await ctx.voice_client.disconnect()
+            await self._disconnect()
         else:
             await ctx.send("Not connected to voice channel")
-        voicehandlers.pop(hash(ctx.guild))
+        # voicehandlers.pop(hash(ctx.guild))
         # Clean play list
         self.playlist.clear()
+
+    async def _disconnect(self):
+        if self.voice_state():
+            await self.txtchannel.send(f'Disconnected from {self.voice_client.channel}')
+            await self.voice_client.disconnect()
+            Log.log('Disconnect', f'{self.voice_client.guild}: {self.voice_client.channel}')
+            self.playlist.clear()
 
     async def skip(self, ctx):
         if not self.voice_state():
@@ -85,24 +115,17 @@ class VoiceHandler:
         # Check if is connected to voice channel
         return self.voice_client is not None and self.voice_client.is_connected()
 
-    def download_source(self, url):
-        if 'www.bilibili.com' in url:
-            return download_bili_audio(url)
-        elif 'www.youtube.com' in url:
-            return download_audio_global(url)
-        else:
-            Log.log('download_url', "ERROR")
-
     async def play_song(self):
         if not self.voice_state():
             Log.log('play_song', 'VOICE_STATE ERROR')
+            return
 
         song = self.playlist.get()
 
         try:
             if song is not None:
                 Log.log("play_song", 'Playing '+ str(song))
-                source = self.download_source(song.path)
+                source = song.get_source()
                 await self.txtchannel.send(f'Now playing {song.name}')
                 self.voice_client.play(source, after=lambda err: self.next_song(err))
             else:
@@ -127,11 +150,10 @@ class VoiceHandler:
 
             if song is not None:
                 Log.log('load_song_youtube', f' {song.name}')
+                self.playlist.add(song)
                 if self.playlist.playing is None:
-                    self.playlist.add(song)
                     await self.play_song()
                 else:
-                    self.playlist.add(song)
                     await ctx.send(f'{song.name} added in queue position {len(self.playlist)}')
 
             else:
@@ -141,14 +163,15 @@ class VoiceHandler:
     async def load_song_bilibili(self, ctx, msg):
         await ctx.send('Searching Bilibili...')
         async with self.txtchannel.typing():
+
             song = preprocess_bili(msg)
+
             if song is not None:
-                Log.log('', f'load_song_bilibili {song.name}')
+                Log.log('load_song_bilibili', f'Load {song.name} success')
+                self.playlist.add(song)
                 if self.playlist.playing is None:
-                    self.playlist.add(song)
                     await self.play_song()
                 else:
-                    self.playlist.add(song)
                     await ctx.send(f'{song.name} added in queue position {len(self.playlist)}')
 
             else:

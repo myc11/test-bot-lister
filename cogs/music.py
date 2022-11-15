@@ -55,6 +55,9 @@ class Music(commands.Cog):
 
     @commands.command(name='play', aliases=['p'])
     async def __play(self, ctx: commands.Context, *, msg: str):
+        if msg == '':
+            return
+
         voicehandler = await VoiceHandler.get_voicehandler(ctx)
         if 'www.bilibili.com' in msg:
             await voicehandler.load_song_bilibili(ctx, msg)
