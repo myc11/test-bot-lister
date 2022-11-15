@@ -1,5 +1,5 @@
 from discord.ext import commands
-
+import discord
 
 class Event(commands.Cog):
 
@@ -11,6 +11,10 @@ class Event(commands.Cog):
     async def __sayd(self, ctx, *, msg):
         await ctx.message.delete()
         await ctx.send(msg)
+
+
+
+
 
 
 async def setup(bot):

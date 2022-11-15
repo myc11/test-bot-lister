@@ -18,14 +18,14 @@ def preprocess_bili(link):
     try:
         html = ses.get(link)
         title = title_regex.findall(html.text)[0]
-        return Song(title, link, Song.BILI)
+        return Song(title, link, source=download_bili_audio)
     except Exception as e:
         try:
             Log.log(e, 'Try searching')
             link = dragbilibili(link)
             html = ses.get(link)
             title = title_regex.findall(html.text)[0]
-            return Song(title, link, Song.BILI)
+            return Song(title, link, source=download_bili_audio)
         except:
             traceback.print_exc()
             return None

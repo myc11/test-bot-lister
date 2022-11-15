@@ -1,13 +1,9 @@
 import os
-
+import discord
 
 class Song:
 
-    LOCAL = 0
-    BILI = 1
-    YOUTUBE = 2
-
-    def __init__(self, name: str, path, source=None):
+    def __init__(self, name: str, path, source: callable=None):
         self.name = name
         self.path = path
         self.source = source
@@ -16,5 +12,11 @@ class Song:
         return f'Name: {self.name} at {self.path}'
 
     def destroy(self):
-        if self.source == Song.LOCAL:
+        if self.source == None:
             os.remove(self.path)
+
+    def get_source(self):
+        if self.source is None:
+            return discord.FFmpegPCMAudio(self.path)
+        else:
+            return self.source(self.path)

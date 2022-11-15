@@ -12,13 +12,13 @@ from utils.log import Log
 def preprocess_youtube(link):
     try:
         title= getyoutube_name(link)
-        return Song(title, link, Song.BILI)
+        return Song(title, link, source=download_audio_global)
     except Exception as e:
         try:
             Log.log(e, 'Try searching')
             link = dragyoutube(link)
             title= getyoutube_name(link)
-            return Song(title, link, Song.BILI)
+            return Song(title, link, source=download_audio_global)
         except:
             traceback.print_exc()
             return None

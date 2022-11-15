@@ -4,11 +4,15 @@ import re
 import urllib
 from urllib.parse import quote
 
+
 def dragyoutube(link):
+    headers = {
+        'origin': 'www.youtube.com',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36'
+    }
+
     query_string = urllib.parse.urlencode({"search_query": link})
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'}
-    links = urllib.request.Request(query_string, headers=headers)
-    html_content = urllib.request.urlopen("https://www.youtube.com.hk/results?" + links)
+    html_content = urllib.request.urlopen("https://www.youtube.com.hk/results?" + query_string)
     search_results = re.findall(r'url\"\:\"\/watch\?v\=(.*?(?=\"))', html_content.read().decode())
     if search_results:
         nlink = "http://www.youtube.com/watch?v={}".format(search_results[0])
@@ -17,11 +21,13 @@ def dragyoutube(link):
             return 'fuck you'
 
 def dragbilibili(link):
+    headers = {
+        'origin': 'www.bilibili.com',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36'
+    }
     link=link.replace(' ','+')
     link=quote(link)
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'}
-    links = urllib.request.Request(link, headers=headers)
-    html_content = urllib.request.urlopen("https://search.bilibili.com/all?keyword=" + links)
+    html_content = urllib.request.urlopen("https://search.bilibili.com/all?keyword=" + link)
     search_results = re.findall(r'www.bilibili.com/video/.*?search', html_content.read().decode())
     if search_results:
         result=search_results[0].replace('?from=search','')
