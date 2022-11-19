@@ -53,6 +53,13 @@ class Music(commands.Cog):
         voicehandler = await VoiceHandler.get_voicehandler(ctx, connect=False)
         await voicehandler.skip(ctx)
 
+    @commands.command(name='shuffle', invoke_without_subcommand=True, aliases=['s'])
+    async def __shuffle(self, ctx: commands.Context):
+        voicehandler = await VoiceHandler.get_voicehandler(ctx, connect=False)
+        await voicehandler.playlist.shuffle()
+        Log.log('shuffle', str(voicehandler.playlist))
+        await ctx.send('Playlist shuffled')
+
     @commands.command(name='play', aliases=['p'])
     async def __play(self, ctx: commands.Context, *, msg: str):
         if msg == '':
@@ -78,10 +85,10 @@ class Music(commands.Cog):
         voicehandler = await VoiceHandler.get_voicehandler(ctx)
         await voicehandler.load_song_bilibili(ctx, msg)
 
-
     @__join.before_invoke
     @__playyoutube.before_invoke
     @__playbili.before_invoke
+    @__shuffle.before_invoke
     async def before_connect(self, ctx: commands.Context):
         if not ctx.author.voice:
             await ctx.send("You are not connected to any voice channel.")

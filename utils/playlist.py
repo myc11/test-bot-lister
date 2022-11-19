@@ -1,4 +1,5 @@
 from utils.log import Log
+import random
 class Playlist:
 
     def __init__(self):
@@ -30,6 +31,9 @@ class Playlist:
         Log.log('playlist', f'{song.name} added')
         self.queue.append(song)
 
+    def shuffle(self):
+        random.shuffle(self.queue)
+
     def get(self):
         if self.playing is not None and self.playing not in self.queue and not self.loop_song:
             self.playing.destroy()
@@ -38,6 +42,8 @@ class Playlist:
         self.loop_skip = False
 
         if len(self) == 0:
+            if self.playing is not None and self.loop_queue:
+                return self.playing
             self.playing = None
             return None
         elif self.loop_song and self.loop_queue:
@@ -50,7 +56,8 @@ class Playlist:
                 self.playing = self.queue.pop(0)
             return self.playing
         elif self.loop_queue:
-            self.queue.append(self.playing)
+            if self.playing is not None:
+                self.queue.append(self.playing)
             self.playing = self.queue.pop(0)
             return self.playing
         else:
