@@ -53,4 +53,4 @@ def qqurlget(username,password,song_name):
     #print('8')下载url
     return url
 
-qqurlget('2025731964','Myc20030416','undefined')
+
