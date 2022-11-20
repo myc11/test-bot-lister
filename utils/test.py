@@ -1,8 +1,9 @@
 import time
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
-def qqurlget(username,password):
+def qqurlget(username,password,song_name):
     d = DesiredCapabilities.CHROME
     d['loggingPrefs'] = { 'browser':'ALL' }
     browser=webdriver.Chrome(desired_capabilities=d)
@@ -29,7 +30,6 @@ def qqurlget(username,password):
     submi=browser.find_element("xpath","//*[@id='login_button']")
     submi.click()
     #print('5')登陆完成
-    song_name='black bird'
     time.sleep(5)
     #nwb='https://y.qq.com/n/ryqq/search?w='+song_name
     browser.switch_to.default_content()
@@ -39,9 +39,11 @@ def qqurlget(username,password):
     browser.find_element("xpath",'//*[@id="app"]/div/div[1]/div/div[1]/div[1]/button/i').click()
     #print('6')播放歌曲
     time.sleep(3)
-    browser.switch_to.default_content()
-    browser.find_element("xpath",'/html/body/div/div/div[3]/div/div/div[4]/ul[2]/li[1]/div/div[2]/span/a/div/span').click()
-    time.sleep(3)
+    browser.switch_to.window(browser.window_handles[-1])
+    pa=browser.find_element(By.CLASS_NAME,'songlist__list')
+    pa.find_element(By.CLASS_NAME,'c_tx_highlight').click()
+    #browser.find_element("xpath",'/html/body/div/div/div[3]/div/div/div[4]/ul[2]/li[1]/div/div[2]/span/a').click()
+    time.sleep(5)
     browser.find_element("xpath",'/html/body/div/div/div[2]/div[1]/div/div[3]/a[1]/span').click()
     time.sleep(5)
     #print('7')按键播放跳player地址
@@ -51,4 +53,4 @@ def qqurlget(username,password):
     #print('8')下载url
     return url
 
-
+qqurlget('2025731964','Myc20030416','undefined')
