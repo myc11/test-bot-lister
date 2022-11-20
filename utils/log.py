@@ -1,4 +1,4 @@
-***REMOVED***
+import time
 
 class Log:
     @staticmethod
