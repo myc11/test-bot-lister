@@ -99,3 +99,6 @@ class QQMusic():
         except Exception as inst:
             traceback.print_exc()
         return '123.png'
+
+    def kill_chrom(self):
+        self.browser.close()
