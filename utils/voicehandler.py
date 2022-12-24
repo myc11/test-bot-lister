@@ -1,3 +1,4 @@
+import asyncio
 import traceback
 
 import discord
@@ -6,6 +7,7 @@ from utils.playlist import Playlist
 from utils.musicyoutube import *
 from utils.musicbilibili import *
 from utils.log import *
+from utils.musicqq import *
 
 voicehandlers = {}
 
@@ -20,6 +22,11 @@ class VoiceHandler:
         Log.log('VoiceHandler.__init__', "New handler: "+str(ctx.guild))
 
         voicehandlers[hash(ctx.guild)] = self
+
+        self.qqmusic = QQMusic()
+        self.qqmusic_initialized = False
+        self.is_loading_qqmusic = False
+        self.qqmusic_loading_pool = []
 
     @classmethod
     async def get_voicehandler_from_guild(cls, guild: discord.Guild):
@@ -177,3 +184,71 @@ class VoiceHandler:
             else:
                 Log.log('ERROR: load_song_bilibili', msg)
                 await ctx.send(f'ERROR: load_song_bilibili {msg}')
+
+    async def login_qqmusic(self, ctx):
+        Log.log("login_qqmusic", "")
+        if not self.qqmusic_initialized:
+            await self.qqmusic.set_up()
+            fname = await self.qqmusic.getqrlogin()
+            pic = discord.File(fname)
+            await ctx.send("Login via qrcode", file=pic)
+            await asyncio.sleep(60)
+            self.qqmusic_initialized = True
+        else:
+            fname = await self.qqmusic.regetqr()
+            pic = discord.File(fname)
+            await ctx.send("Login via qrcode", file=pic)
+            await asyncio.sleep(60)
+
+    async def load_song_qqmusic(self, ctx, msg):
+        self.qqmusic_loading_pool.append(self._load_song_qqmusic(ctx, msg))
+        if not self.is_loading_qqmusic:
+            await self.start_load_song_qqmusic()
+        else:
+            await ctx.send(f"Loading {msg} in position {len(self.qqmusic_loading_pool)}")
+
+    async def start_load_song_qqmusic(self):
+
+        self.is_loading_qqmusic = True
+        await self.qqmusic_loading_pool.pop(0)
+        if len(self.qqmusic_loading_pool) > 0:
+            await self.start_load_song_qqmusic()
+        else:
+            self.is_loading_qqmusic = False
+
+    async def _load_song_qqmusic(self, ctx, msg, retry=0):
+        Log.log("_load_song_qqmusic", msg + " " + str(retry))
+        try:
+            if retry == 2:
+                Log.log("_load_song_qqmusic", "Too many retries, aborting")
+                self.qqmusic_loading_pool.clear()
+                return
+
+            if not self.qqmusic_initialized:
+                Log.log("_load_song_qqmusic", "Initialize qqmusic")
+                await self.login_qqmusic(ctx)
+
+            if not await self.qqmusic.testlogin():
+                await ctx.send(f"Login failed")
+                await self.login_qqmusic(ctx)
+                await self._load_song_qqmusic(ctx, msg, retry+1)
+                return
+
+            await ctx.send(f"Searching {msg}")
+            url = await self.qqmusic.findsong(msg)
+
+            if url is not None:
+                song = Song(msg, url)
+            else:
+                return
+
+            Log.log('load_song_qqmusic', f'Add {song.name}')
+            self.playlist.add(song)
+            if self.playlist.playing is None:
+                await self.play_song()
+            else:
+                await ctx.send(f'{song.name} added in queue position {len(self.playlist)}')
+        except Exception as inst:
+            traceback.print_exc()
+
+

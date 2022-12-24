@@ -42,7 +42,7 @@ class Playlist:
         self.loop_skip = False
 
         if len(self) == 0:
-            if self.playing is not None and self.loop_queue:
+            if self.playing is not None and (self.loop_song or self.loop_queue):
                 return self.playing
             self.playing = None
             return None

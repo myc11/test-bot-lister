@@ -81,9 +81,14 @@ class Music(commands.Cog):
 
     @commands.command(name='playb', aliases=['playbili', 'b'])
     async def __playbili(self, ctx: commands.Context, *, msg: str):
-
         voicehandler = await VoiceHandler.get_voicehandler(ctx)
         await voicehandler.load_song_bilibili(ctx, msg)
+
+    @commands.command(name="playqq", aliases=['playqqmusic', "qq"])
+    async def __playqqmusic(self, ctx: commands.Context, *, msg: str):
+        voicehandler = await VoiceHandler.get_voicehandler(ctx)
+        await voicehandler.load_song_qqmusic(ctx, msg)
+
 
     @__join.before_invoke
     @__playyoutube.before_invoke
