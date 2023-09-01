@@ -2,7 +2,6 @@ import json
 import urllib.request
 import urllib
 
-url = 'https://www.youtube.com/watch?v=z3UYgpFNcbQ'
 def getyoutube_name(link):
     x=link.split('=')
     li = list(x)

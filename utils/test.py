@@ -30,7 +30,7 @@ def qqurlget(username,password,song_name):
     submi=browser.find_element("xpath","//*[@id='login_button']")
     submi.click()
     #print('5')登陆完成
-    time.sleep(5)
+    time.sleep(60)
     #nwb='https://y.qq.com/n/ryqq/search?w='+song_name
     browser.switch_to.default_content()
     serch=browser.find_element("xpath",'/html/body/div/div/div[1]/div/div[1]/div[1]/input')
@@ -52,5 +52,4 @@ def qqurlget(username,password,song_name):
     url=browser.find_element("xpath",'/html/body/audio').get_attribute("src")
     #print('8')下载url
     return url
-
 
